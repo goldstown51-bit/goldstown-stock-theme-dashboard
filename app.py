@@ -298,10 +298,10 @@ st.download_button(
   mime="text/csv"
 )
 
-    # -------------------------
-    # テーマ指数（等ウェイトの簡易インデックス）
-    # -------------------------
-    st.subheader("テーマ指数（等ウェイト・指数化）")
+# -------------------------
+# テーマ指数（等ウェイトの簡易インデックス）
+# -------------------------
+st.subheader("テーマ指数（等ウェイト・指数化）")
 
     # lookbackの日数（ざっくり営業日）
     lookback_map = {"1mo": 25, "3mo": 70, "6mo": 140}
@@ -309,12 +309,12 @@ st.download_button(
 
     closes = []
     for code, hist in hists.items():
-        s = hist["Close"].astype(float)
-        if len(s) < 30:
-            continue
-        s = s.tail(lb)
-        s = s / float(s.iloc[0]) * 100.0  # 先頭を100に
-        closes.append(s.rename(code))
+    s = hist["Close"].astype(float)
+    if len(s) < 30:
+        continue
+    s = s.tail(lb)
+    s = s / float(s.iloc[0]) * 100.0  # 先頭を100に
+    closes.append(s.rename(code))
 
     if len(closes) >= 2:
         idx = pd.concat(closes, axis=1).dropna(how="all")
