@@ -309,12 +309,12 @@ lb = lookback_map.get(index_lookback, 70)
 
 closes = []
 for code, hist in hists.items():
-s = hist["Close"].astype(float)
-if len(s) < 30:
-    continue
-s = s.tail(lb)
-s = s / float(s.iloc[0]) * 100.0  # 先頭を100に
-closes.append(s.rename(code))
+    s = hist["Close"].astype(float)
+    if len(s) < 30:
+        continue
+    s = s.tail(lb)
+    s = s / float(s.iloc[0]) * 100.0  # 先頭を100に
+    closes.append(s.rename(code))
 
 if len(closes) >= 2:
     idx = pd.concat(closes, axis=1).dropna(how="all")
