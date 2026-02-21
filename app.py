@@ -9,6 +9,29 @@ APP_NAME = "テーマ株スコアボード"
 st.title(APP_NAME)
 st.caption("フィジカルAI / 防衛安保 / 半導体：テーマ内相対スコアでランキング＋テーマ指数チャート")
 
+st.markdown("""
+<style>
+/* 全体 */
+.block-container { padding-top: 1.2rem; padding-bottom: 2.5rem; max-width: 1180px; }
+html, body, [class*="css"]  { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+  "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", "Segoe UI", Roboto, sans-serif; }
+
+/* 見出しを日本サイトっぽく */
+h1 { letter-spacing: 0.02em; }
+h2, h3 { border-left: 6px solid rgba(0,0,0,0.15); padding-left: .6rem; margin-top: 1.0rem; }
+
+/* データフレームの見た目：余白・枠・ヘッダ */
+div[data-testid="stDataFrame"] { border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; }
+div[data-testid="stDataFrame"] div[role="columnheader"] {
+  font-weight: 700;
+  background: rgba(0,0,0,0.03);
+}
+
+/* metricカードを少し“サイト風”に */
+div[data-testid="stMetric"] { border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 10px 12px; }
+</style>
+""", unsafe_allow_html=True)
+
 themes = pd.read_csv("themes.csv")
 themes["code"] = themes["code"].astype(str)
 
@@ -188,17 +211,85 @@ with right:
     # -------------------------
     top1 = view.iloc[0]
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("TOP1", f'{top1["code"]} {top1["name"]}')
+    c1.metric("注目銘柄", f'{top1["code"]} {top1["name"]}')
     c2.metric("スコア", f'{top1["score"]}')
     c3.metric("前日比", f'{top1["chg1d%"]}%')
     c4.metric("出来高急増", f'{top1["vol_surge"]}x')
 
     st.subheader(f"スコアランキング：{theme}")
-    st.dataframe(
-        view[["code","name","score","close","chg1d%","vol","vol_surge","ma20_dev%","from_high%","ret_1w%","ret_1m%","ret_3m%"]],
-        use_container_width=True,
-        hide_index=True
-    )
+table = view[["code","name","score","close","chg1d%","vol","vol_surge","ma20_dev%","from_high%","ret_1w%","ret_1m%","ret_3m%"]].copy()
+
+# 日本語ヘッダに
+table = table.rename(columns={
+    "code":"コード",
+    "name":"銘柄",
+    "score":"スコア",
+    "close":"終値",
+    "chg1d%":"前日比(%)",
+    "vol":"出来高",
+    "vol_surge":"出来高急増(x)",
+    "ma20_dev%":"20MA乖離(%)",
+    "from_high%":"高値乖離(%)",
+    "ret_1w%":"1週(%)",
+    "ret_1m%":"1ヶ月(%)",
+    "ret_3m%":"3ヶ月(%)",
+})
+
+# まず表示用に整形（桁区切り・小数）
+def fmt_int(x):
+    try:
+        return f"{int(x):,}"
+    except Exception:
+        return ""
+
+def fmt_f1(x):
+    try:
+        return f"{float(x):.1f}"
+    except Exception:
+        return ""
+
+def fmt_f2(x):
+    try:
+        return f"{float(x):.2f}"
+    except Exception:
+        return ""
+
+# 右寄せ＋Zebra＋上昇/下落の控えめ強調
+def zebra(row_idx):
+    return "background-color: rgba(0,0,0,0.02)" if row_idx % 2 == 1 else ""
+
+def color_pct(v):
+    try:
+        v = float(v)
+    except Exception:
+        return ""
+    if v > 0:
+        return "color: #d32f2f; font-weight: 600;"   # 上昇＝赤（日本株っぽさ）
+    if v < 0:
+        return "color: #1976d2; font-weight: 600;"   # 下落＝青
+    return "color: rgba(0,0,0,0.75);"
+
+styler = (
+    table.style
+    .apply(lambda s: [zebra(i) for i in range(len(s))], axis=0)
+    .set_properties(**{"text-align":"right"})
+    .set_properties(subset=["コード","銘柄"], **{"text-align":"left"})
+    .format({
+        "スコア": fmt_f1,
+        "終値": fmt_f1,
+        "前日比(%)": fmt_f2,
+        "出来高": fmt_int,
+        "出来高急増(x)": fmt_f2,
+        "20MA乖離(%)": fmt_f2,
+        "高値乖離(%)": fmt_f2,
+        "1週(%)": fmt_f2,
+        "1ヶ月(%)": fmt_f2,
+        "3ヶ月(%)": fmt_f2,
+    })
+    .applymap(color_pct, subset=["前日比(%)","1週(%)","1ヶ月(%)","3ヶ月(%)","20MA乖離(%)"])
+)
+
+st.dataframe(styler, use_container_width=True, hide_index=True)
 
     st.download_button(
         "CSVダウンロード（表示分）",
