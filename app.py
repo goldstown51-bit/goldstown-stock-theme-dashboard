@@ -303,49 +303,49 @@ st.download_button(
 # -------------------------
 st.subheader("テーマ指数（等ウェイト・指数化）")
 
-    # lookbackの日数（ざっくり営業日）
-    lookback_map = {"1mo": 25, "3mo": 70, "6mo": 140}
-    lb = lookback_map.get(index_lookback, 70)
+# lookbackの日数（ざっくり営業日）
+lookback_map = {"1mo": 25, "3mo": 70, "6mo": 140}
+lb = lookback_map.get(index_lookback, 70)
 
-    closes = []
-    for code, hist in hists.items():
-    s = hist["Close"].astype(float)
-    if len(s) < 30:
-        continue
-    s = s.tail(lb)
-    s = s / float(s.iloc[0]) * 100.0  # 先頭を100に
-    closes.append(s.rename(code))
+closes = []
+for code, hist in hists.items():
+s = hist["Close"].astype(float)
+if len(s) < 30:
+    continue
+s = s.tail(lb)
+s = s / float(s.iloc[0]) * 100.0  # 先頭を100に
+closes.append(s.rename(code))
 
-    if len(closes) >= 2:
-        idx = pd.concat(closes, axis=1).dropna(how="all")
-        theme_index = idx.mean(axis=1).rename("ThemeIndex")
-        st.line_chart(theme_index)
-        idx_chg = safe_pct(float(theme_index.iloc[-1]), float(theme_index.iloc[0]))
-        st.caption(f"期間（{index_lookback}）のテーマ指数変化：{idx_chg:.2f}%（先頭=100の等ウェイト指数）")
-    else:
-        st.info("テーマ指数を作るのに十分な銘柄データがありませんでした（取得失敗が多い場合に起きます）。")
+if len(closes) >= 2:
+    idx = pd.concat(closes, axis=1).dropna(how="all")
+    theme_index = idx.mean(axis=1).rename("ThemeIndex")
+    st.line_chart(theme_index)
+    idx_chg = safe_pct(float(theme_index.iloc[-1]), float(theme_index.iloc[0]))
+    st.caption(f"期間（{index_lookback}）のテーマ指数変化：{idx_chg:.2f}%（先頭=100の等ウェイト指数）")
+else:
+    st.info("テーマ指数を作るのに十分な銘柄データがありませんでした（取得失敗が多い場合に起きます）。")
 
-    # -------------------------
-    # 銘柄詳細（クリック代わりに選択式）
-    # -------------------------
-    st.subheader("銘柄詳細（チャート）")
-    pick = st.selectbox("銘柄を選択", view["code"].tolist(), index=0)
-    if pick in hists:
-        hist = hists[pick].copy()
-        hist = hist.tail(lb)
-        chart = hist["Close"].astype(float)
-        st.line_chart(chart)
+# -------------------------
+# 銘柄詳細（クリック代わりに選択式）
+# -------------------------
+st.subheader("銘柄詳細（チャート）")
+pick = st.selectbox("銘柄を選択", view["code"].tolist(), index=0)
+if pick in hists:
+    hist = hists[pick].copy()
+    hist = hist.tail(lb)
+    chart = hist["Close"].astype(float)
+    st.line_chart(chart)
 
-        # 追加の小メトリクス
-        last = float(hist["Close"].iloc[-1])
-        ma20 = float(hist["Close"].astype(float).rolling(20).mean().iloc[-1])
-        vol = float(hist["Volume"].astype(float).iloc[-1])
-        vol20 = float(hist["Volume"].astype(float).rolling(20).mean().iloc[-1])
-        vs = (vol / vol20) if vol20 else float("nan")
+    # 追加の小メトリクス
+    last = float(hist["Close"].iloc[-1])
+    ma20 = float(hist["Close"].astype(float).rolling(20).mean().iloc[-1])
+    vol = float(hist["Volume"].astype(float).iloc[-1])
+    vol20 = float(hist["Volume"].astype(float).rolling(20).mean().iloc[-1])
+    vs = (vol / vol20) if vol20 else float("nan")
 
-        m1, m2, m3 = st.columns(3)
-        m1.metric("終値", f"{last:.1f}")
-        m2.metric("20MA乖離", f"{safe_pct(last, ma20):.2f}%")
-        m3.metric("出来高急増", f"{vs:.2f}x")
+    m1, m2, m3 = st.columns(3)
+    m1.metric("終値", f"{last:.1f}")
+    m2.metric("20MA乖離", f"{safe_pct(last, ma20):.2f}%")
+    m3.metric("出来高急増", f"{vs:.2f}x")
 
 st.caption("注：無料データ取得のため、取得できない銘柄が混ざることがあります。")
