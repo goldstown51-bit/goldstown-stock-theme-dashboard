@@ -291,12 +291,12 @@ styler = (
 
 st.dataframe(styler, use_container_width=True, hide_index=True)
 
-    st.download_button(
-        "CSVダウンロード（表示分）",
-        view.to_csv(index=False).encode("utf-8"),
-        file_name=f"{theme}_score.csv",
-        mime="text/csv"
-    )
+st.download_button(
+  "CSVダウンロード（表示分）",
+  view.to_csv(index=False).encode("utf-8"),
+  file_name=f"{theme}_score.csv",
+  mime="text/csv"
+)
 
     # -------------------------
     # テーマ指数（等ウェイトの簡易インデックス）
